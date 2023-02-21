@@ -1,0 +1,2 @@
+counter:hour_getter:image_saver
+-DCATKIN_DEVEL_PREFIX=/home/guillermo/ros_ws/lab2_3/devel -DCMAKE_INSTALL_PREFIX=/home/guillermo/ros_ws/lab2_3/install -G Unix Makefiles

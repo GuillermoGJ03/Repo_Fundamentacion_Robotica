@@ -1,0 +1,4 @@
+<launch> 
+    <node name="counter" pkg="counter" type="counter.py" />
+
+</launch>

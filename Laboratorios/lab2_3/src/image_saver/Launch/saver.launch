@@ -1,0 +1,10 @@
+<launch>
+    <node name = "cam" pkg = "cv_camera" type = "cv_camera_node">
+        <param name =  "device" value = "0"/>
+    </node>
+
+    <include file = "$(find counter)/launch/counter.launch"/>
+    <include file = "$(find hour_getter)/launch/hour_getter.launch"/>
+
+    <node name ="image_saver" pkg="image_saver" type="saver.py"/>
+</launch>

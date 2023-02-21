@@ -1,0 +1,4 @@
+<launch> 
+    <node name="hour_getter" pkg="hour_getter" type="hour_getter.py" />
+
+</launch>

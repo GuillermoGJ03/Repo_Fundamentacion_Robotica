@@ -1,0 +1,8 @@
+prefix=/home/guillermo/ros_ws/lab2_3/install
+
+Name: image_saver
+Description: Description of image_saver
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 

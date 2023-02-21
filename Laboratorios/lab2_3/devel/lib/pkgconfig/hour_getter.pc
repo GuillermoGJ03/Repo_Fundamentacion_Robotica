@@ -1,0 +1,8 @@
+prefix=/home/guillermo/ros_ws/lab2_3/devel
+
+Name: hour_getter
+Description: Description of hour_getter
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 

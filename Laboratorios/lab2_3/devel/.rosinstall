@@ -1,0 +1,2 @@
+- setup-file:
+    local-name: /home/guillermo/ros_ws/lab2_3/devel/setup.sh

@@ -1,0 +1,8 @@
+prefix=/home/guillermo/ros_ws/lab2_3/devel
+
+Name: counter
+Description: Description of counter
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 
