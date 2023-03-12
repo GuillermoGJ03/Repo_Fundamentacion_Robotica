@@ -10,7 +10,7 @@
 #define SENTIDO_2 9
 
 // Estado de los encoders
-int encoderA_sate, encoderB_state;
+int encoderA_state, encoderB_state, prev_state = 0;
 
 // Respuestas del motor
 int sentido = 0;
@@ -23,15 +23,23 @@ unsigned long tiempo_anterior = 0;
 unsigned long tiempo_actual = 0;
 unsigned long tiempo;
 
+// Variables de ros
+ros::NodeHandle nh;
+
+std_msgs::Float32 flPOS_msg;
+std_msgs::Float32 flRPM_msg;
+
 // Callback del subscriber
 void pwmCallback(const std_msgs::Int16 & msg){
-  int16_t pwm_signal = abs(msg.data);
-  if(pwm > 0){
+  int16_t pwm_signal;
+  if(msg.data > 0){
     digitalWrite(SENTIDO_1, LOW);
     digitalWrite(SENTIDO_2, HIGH);
-  } else if(pwm < 0){
+    pwm_signal = msg.data;
+  } else if(msg.data < 0){
     digitalWrite(SENTIDO_1, HIGH);
     digitalWrite(SENTIDO_2, LOW);
+    pwm_signal = abs(msg.data);
   } else{
     digitalWrite(SENTIDO_1, LOW);
     digitalWrite(SENTIDO_2, LOW);
@@ -41,19 +49,10 @@ void pwmCallback(const std_msgs::Int16 & msg){
   analogWrite(ENABLE, pwm_signal);
 }
 
-// Variables de ros
-ros::NodeHandle nh;
+ros::Publisher spin_pub("spin_pub", &flPOS_msg);
+ros::Publisher rpm_pub("spm_pub", &flRPM_msg);
 
-std_msgs::Float32 flPOS_msg;
-std_msgs::Float32 flRPM_msg;
-
-ros::Publisher POS("POS", &flPOS_msg);
-ros::Publisher RPM("RPM", &flRPM_msg);
-
-ros::Subscriber<std_msgs::Int16> PWM("PWM", &pwmCallback);
-
-ros::Publisher POS("POS", &flPOS_msg);
-ros::Publisher RPM("RPM", &flRPM_msg);
+ros::Subscriber<std_msgs::Int16> pwm_listener("pwm_listener", &pwmCallback);
 
 void setup(){
   // Señales para el motor
@@ -64,50 +63,52 @@ void setup(){
   // Señales e interrupciones del encoder
   pinMode(ENCODER_A, INPUT_PULLUP);
   pinMode(ENCODER_B, INPUT_PULLUP);
-  attachInterrupt(digitalPinToInterrupt(ENCODER_A), estado_encoderA, RISING);
-  attachInterrupt(digitalPinToInterrupt(ENCODER_B), comprobacion_encoderB, RISING);
+  attachInterrupt(digitalPinToInterrupt(ENCODER_A), estado_encoderA, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(ENCODER_B), comprobacion_encoderB, CHANGE);
 
   // Inicializacion de ROS
   nh.initNode();
-  nh.advertise(POS);
-  nh.advertise(RPM);
-  nh.subscribe(PWM);
+  nh.advertise(spin_pub);
+  nh.advertise(rpm_pub);
+  nh.subscribe(pwm_listener);
 }
 
 void loop(){
   flPOS_msg.data = posicion;
   flRPM_msg.data = rpm * sentido;
   
-  POS.publish(&flPOS_msg);
-  RPM.publish(&flRPM_msg);
-
+  spin_pub.publish(&flPOS_msg);
+  rpm_pub.publish(&flRPM_msg);
+  
   nh.spinOnce();
-  delay(1);
+  delay(10);
 }
 
 void estado_encoderA(){
   encoderA_state = digitalRead(ENCODER_A);
   if(encoderA_state == 1){
     tiempo_actual = micros();
-    tiempo = tiempo_actual-tiempo anterior;
+    tiempo = tiempo_actual-tiempo_anterior;
     tiempo_anterior = tiempo_actual;
-    rpm = 60000000.0/((float)tiempo*495.0)
-  }
-
+    rpm = 60000000.0/((float)tiempo*495.0);
+  }  
 }
 
 void comprobacion_encoderB(){
-  encoderB_state = digitalREad(ENCODER_B)
-  if(encoderA_state == encoderB_state){
-    sentido = 1; // Clockwise
-    if(encoderB_sate == 1){
-      pulsos++;
+  encoderB_state = digitalRead(ENCODER_B);
+  if(encoderB_state != prev_state){
+    if(encoderA_state == encoderB_state){
+      sentido = -1; // Clockwise
+      if(encoderB_state == 1){
+        pulsos++;
+      }
+    }else if(encoderA_state != encoderB_state){
+      sentido = 1; // Counter-Clockwise
+      if(encoderB_state == 1){
+        pulsos--;
+      }
     }
-  }else if(encoderA_state != encoderB_state){
-    sentido = -1; // Counter-Clockwise
-    if(encoderB_state == 1){
-      pulsos--;
-    }
+    posicion = (float)pulsos/495.0;
   }
-  posicion = (float)pulsos/495.0;
+  prev_state = encoderB_state;
 }
